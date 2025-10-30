@@ -99,7 +99,7 @@ export interface Format {
 	/**
 	 * Format rendering options
 	 */
-	render?: Record<string, unknown>;
+	render: Record<string, unknown>;
 	/**
 	 * Format execution options
 	 */

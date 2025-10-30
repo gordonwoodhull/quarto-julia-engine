@@ -187,7 +187,7 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
 
         // TODO: executeDaemon can take a number for timeout of kernels, but
         // QuartoNotebookRunner currently doesn't support that
-        const nb = await executeJulia(juliaExecOptions, context);
+        const nb = await executeJulia(juliaExecOptions);
 
         if (!nb) {
           error("Execution of notebook returned undefined");
@@ -221,7 +221,7 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
             language: nb.metadata.kernelspec.language.toLowerCase(),
             assets,
             execute: options.format.execute,
-            keepHidden: options.format.render?.[kKeepHidden] as boolean | undefined,
+            keepHidden: options.format.render[kKeepHidden] as boolean | undefined,
             toHtml: quarto.format.isHtmlCompatible(options.format),
             toLatex: quarto.format.isLatexOutput(options.format.pandoc),
             toMarkdown: quarto.format.isMarkdownOutput(options.format),
@@ -231,10 +231,10 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
             ),
             figFormat: options.format.execute[kFigFormat] as string | undefined,
             figDpi: options.format.execute[kFigDpi] as number | undefined,
-            figPos: options.format.render?.[kFigPos] as string | undefined,
+            figPos: options.format.render[kFigPos] as string | undefined,
             // preserveCellMetadata,
             preserveCodeCellYaml:
-              options.format.render?.[kIpynbProduceSourceNotebook] === true,
+              options.format.render[kIpynbProduceSourceNotebook] === true,
           },
         );
 
@@ -318,7 +318,6 @@ function powershell_argument_list_to_string(...args: string[]): string {
 
 async function startOrReuseJuliaServer(
   options: JuliaExecuteOptions,
-  context: EngineProjectContext,
 ): Promise<{ reused: boolean }> {
   const transportFile = juliaTransportFile();
   if (!existsSync(transportFile)) {
@@ -331,7 +330,7 @@ async function startOrReuseJuliaServer(
     let juliaProject = Deno.env.get("QUARTO_JULIA_PROJECT");
 
     if (juliaProject === undefined) {
-      await ensureQuartoNotebookRunnerEnvironment(options, context);
+      await ensureQuartoNotebookRunnerEnvironment(options);
       juliaProject = quarto.path.runtime("julia");
     } else {
       juliaProject = quarto.path.toForwardSlashes(juliaProject);
@@ -442,7 +441,6 @@ async function startOrReuseJuliaServer(
 
 async function ensureQuartoNotebookRunnerEnvironment(
   options: JuliaExecuteOptions,
-  context: EngineProjectContext,
 ) {
   const runtimeDir = quarto.path.runtime("julia");
   const projectTomlTemplate = quarto.path.resource(
@@ -477,7 +475,6 @@ interface JuliaTransportFile {
 
 async function pollTransportFile(
   options: JuliaExecuteOptions,
-  context: EngineProjectContext,
 ): Promise<JuliaTransportFile> {
   const transportFile = juliaTransportFile();
 
@@ -547,13 +544,12 @@ async function getReadyServerConnection(
 
 async function getJuliaServerConnection(
   options: JuliaExecuteOptions,
-  context: EngineProjectContext,
 ): Promise<Deno.TcpConn> {
-  const { reused } = await startOrReuseJuliaServer(options, context);
+  const { reused } = await startOrReuseJuliaServer(options);
 
   let transportOptions: JuliaTransportFile;
   try {
-    transportOptions = await pollTransportFile(options, context);
+    transportOptions = await pollTransportFile(options);
   } catch (err) {
     if (!reused) {
       info(
@@ -590,7 +586,7 @@ async function getJuliaServerConnection(
         "Connecting to server failed, a transport file was reused so it might be stale. Delete transport file and retry.",
       );
       safeRemoveSync(juliaTransportFile());
-      return await getJuliaServerConnection(options, context);
+      return await getJuliaServerConnection(options);
     } else {
       error(
         "Connecting to server failed. A transport file was successfully created by the server process, so something in the server process might be broken.",
@@ -633,7 +629,6 @@ function getConsoleColumns(): number | null {
 
 function buildSourceRanges(
   markdown: MappedString,
-  context: EngineProjectContext,
 ): Array<SourceRange> {
   const lines = quarto.mappedString.splitLines(markdown);
   const sourceRanges: Array<SourceRange> = [];
@@ -696,10 +691,9 @@ function buildSourceRanges(
 
 async function executeJulia(
   options: JuliaExecuteOptions,
-  context: EngineProjectContext,
 ): Promise<JupyterNotebook> {
-  const conn = await getJuliaServerConnection(options, context);
-  const transportOptions = await pollTransportFile(options, context);
+  const conn = await getJuliaServerConnection(options);
+  const transportOptions = await pollTransportFile(options);
   const file = options.target.input;
   if (options.oneShot || options.format.execute[kExecuteDaemonRestart]) {
     const isopen = await writeJuliaCommand(
@@ -718,7 +712,7 @@ async function executeJulia(
     }
   }
 
-  const sourceRanges = buildSourceRanges(options.target.markdown, context);
+  const sourceRanges = buildSourceRanges(options.target.markdown);
 
   const response = await writeJuliaCommand(
     conn,
@@ -979,17 +973,17 @@ function populateJuliaEngineCommand(command: Command) {
     .command("status", "Status")
     .description(
       "Get status information on the currently running Julia server process.",
-    ).action(async () => await logStatus())
+    ).action(logStatus)
     .command("kill", "Kill server")
     .description(
       "Kill the control server if it is currently running. This will also kill all notebook worker processes.",
     )
-    .action(async () => await killJuliaServer())
+    .action(killJuliaServer)
     .command("log", "Print julia server log")
     .description(
       "Print the content of the julia server log file if it exists which can be used to diagnose problems.",
     )
-    .action(() => printJuliaServerLog())
+    .action(printJuliaServerLog)
     .command(
       "close",
       "Close the worker for a given notebook. If it is currently running, it will not be interrupted.",
@@ -1007,7 +1001,7 @@ function populateJuliaEngineCommand(command: Command) {
     .description(
       "Send a message to the server that it should close all notebooks and exit. This will fail if any notebooks are not idle.",
     )
-    .action(() => stopServer());
+    .action(stopServer);
   return;
 }
 
