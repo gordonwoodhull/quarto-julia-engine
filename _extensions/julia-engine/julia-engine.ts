@@ -112,8 +112,7 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
   /**
    * Populate engine-specific CLI commands
    */
-  populateCommand: (command) =>
-    populateJuliaEngineCommand(command),
+  populateCommand: (command) => populateJuliaEngineCommand(command),
 
   /**
    * Launch a dynamic execution engine with project context
@@ -162,7 +161,7 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
       },
 
       execute: async (options: ExecuteOptions): Promise<ExecuteResult> => {
-        options.target.source;
+        console.log("test update extension");
 
         // use daemon by default if we are in an interactive session (terminal
         // or rstudio) and not running in a CI system.
@@ -221,7 +220,9 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery & {
             language: nb.metadata.kernelspec.language.toLowerCase(),
             assets,
             execute: options.format.execute,
-            keepHidden: options.format.render[kKeepHidden] as boolean | undefined,
+            keepHidden: options.format.render[kKeepHidden] as
+              | boolean
+              | undefined,
             toHtml: quarto.format.isHtmlCompatible(options.format),
             toLatex: quarto.format.isLatexOutput(options.format.pandoc),
             toMarkdown: quarto.format.isMarkdownOutput(options.format),
