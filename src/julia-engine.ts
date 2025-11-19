@@ -10,7 +10,7 @@ import { error, info } from "log";
 import { existsSync } from "fs/exists";
 import { encodeBase64 } from "encoding/base64";
 
-// Type imports from bundled quarto-types
+// Type imports from Quarto via import map
 import type {
   Command,
   DependenciesOptions,
@@ -25,7 +25,7 @@ import type {
   PandocIncludes,
   PostProcessOptions,
   QuartoAPI,
-} from "./types/quarto-types.d.ts";
+} from "@quarto/types";
 
 // Constants for this engine
 import {
