@@ -8,7 +8,7 @@ Install it with
 quarto add gordonwoodhull/quarto-julia-engine
 ```
 
-You'll need the `feature/engine-extension` branch of Quarto, until it's merged.
+You'll need the `feature/engine-extension-3` branch of Quarto, until it's merged.
 
 ## Development
 
