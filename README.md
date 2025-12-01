@@ -15,7 +15,7 @@ You'll need the `feature/engine-extension` branch of Quarto, until it's merged.
 To build the TypeScript engine extension:
 
 ```bash
-quarto call build-ts-extension
+quarto call build-ts-extension src/julia-engine.ts
 ```
 
 This bundles `src/julia-engine.ts` into `_extensions/julia-engine/julia-engine.js`.
