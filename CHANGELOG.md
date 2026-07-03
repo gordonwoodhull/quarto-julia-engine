@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Unreleased
 
 - Added static engine declarations (`name`, `claims`, `file-extensions`) to the engine's `_extension.yml` entry, allowing Quarto 2 to resolve `{julia}` cells and `.jl` files to this engine without loading the engine module. These keys are reserved for Quarto 2 and rejected by Quarto 1's `external-engine` schema today; merging requires a quarto-cli schema change (accept-and-ignore) to ship in a stable Quarto 1 release.
+- Fixed the detached control server inheriting the launching process's stdout/stderr: the server's early startup output (Julia banners, precompile messages) could interleave with quarto's own output, and corrupt structured-output channels in embedding hosts. The server's stdio is now redirected to devnull; the server log file is unaffected.
 
 ## [0.2.2](https://github.com/PumasAI/quarto-julia-engine/releases/tag/v0.2.2) - 2026-09-08
 
