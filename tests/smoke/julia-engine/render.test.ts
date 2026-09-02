@@ -87,3 +87,28 @@ Deno.test("engine reordering", () => {
 
   try { Deno.removeSync(outputFile); } catch { /* ok */ }
 });
+
+Deno.test("large payload exceeding the socket send buffer", () => {
+  const dir = docs("julia-engine/large-payload");
+  const input = join(dir, "large-payload.qmd");
+
+  const line =
+    '<span class="x">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</span>';
+  const body = new Array(25000).fill(line).join("\n");
+  Deno.mkdirSync(dir, { recursive: true });
+  Deno.writeTextFileSync(
+    input,
+    "---\ntitle: large payload\nformat: markdown\nengine: julia\n---\n\n" +
+      '```{julia}\n#| echo: false\n"marker-" * string(1 + 1)\n```\n\n' +
+      "```{=html}\n" + body + "\n```\n",
+  );
+
+  renderQmd(input, ["--to", "markdown"]);
+
+  const outputFile = join(dir, "large-payload.md");
+  assert(existsSync(outputFile), `Output file ${outputFile} should exist`);
+  assertMatch(Deno.readTextFileSync(outputFile), /marker-2/);
+
+  try { Deno.removeSync(outputFile); } catch { /* ok */ }
+  try { Deno.removeSync(input); } catch { /* ok */ }
+});

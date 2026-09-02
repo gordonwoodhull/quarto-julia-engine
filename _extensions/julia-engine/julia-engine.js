@@ -621,6 +621,14 @@ function encodeBase64(data) {
   return new TextDecoder().decode(output);
 }
 
+// deno:https://jsr.io/@std/io/0.224.0/write_all.ts
+async function writeAll(writer, data) {
+  let nwritten = 0;
+  while (nwritten < data.length) {
+    nwritten += await writer.write(data.subarray(nwritten));
+  }
+}
+
 // src/constants.ts
 var kJuliaEngine = "julia";
 var kExecuteDaemon = "daemon";
@@ -1156,10 +1164,7 @@ async function writeJuliaCommand(conn, command, secret, options, onProgressUpdat
   }) + "\n";
   const messageBytes = new TextEncoder().encode(message);
   trace(options, `write command "${command.type}" to socket server`);
-  const bytesWritten = await conn.write(messageBytes);
-  if (bytesWritten !== messageBytes.length) {
-    throw new Error("Internal Error");
-  }
+  await writeAll(conn, messageBytes);
   let restOfPreviousResponse = new Uint8Array(512);
   let restLength = 0;
   while (true) {
