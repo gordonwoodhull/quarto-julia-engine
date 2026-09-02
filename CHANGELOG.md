@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Large documents no longer fail with `ERROR: Internal Error` when the payload sent to the Julia server exceeds the socket send buffer ([quarto-cli#14834](https://github.com/quarto-dev/quarto-cli/issues/14834), [#12](https://github.com/PumasAI/quarto-julia-engine/pull/12)).
+
 ## [0.2.0](https://github.com/PumasAI/quarto-julia-engine/releases/tag/v0.2.0) - 2026-03-24
 
 - Added `keep-ipynb` support. When `keep-ipynb: true` is set in document YAML, the executed notebook is written to `<stem>.ipynb` alongside the source file [#8](https://github.com/PumasAI/quarto-julia-engine/pull/8).

@@ -8,6 +8,7 @@
 import { dirname, fromFileUrl, join, resolve } from "path";
 import { existsSync } from "fs/exists";
 import { encodeBase64 } from "encoding/base64";
+import { writeAll } from "jsr:@std/io@0.224.0/write-all";
 
 // Type imports from Quarto via import map
 import type {
@@ -841,10 +842,7 @@ async function writeJuliaCommand<T extends ServerCommand["type"]>(
   const messageBytes = new TextEncoder().encode(message);
 
   trace(options, `write command "${command.type}" to socket server`);
-  const bytesWritten = await conn.write(messageBytes);
-  if (bytesWritten !== messageBytes.length) {
-    throw new Error("Internal Error");
-  }
+  await writeAll(conn, messageBytes);
 
   // a string of bytes received from the server could start with a
   // partial message, contain multiple complete messages (separated by newlines) after that
