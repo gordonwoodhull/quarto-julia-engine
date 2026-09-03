@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+## [0.2.1](https://github.com/PumasAI/quarto-julia-engine/releases/tag/v0.2.1) - 2026-09-02
+
+- Updated to QuartoNotebookRunner 0.18.2 [#13](https://github.com/PumasAI/quarto-julia-engine/pull/13):
+  - Shell (`;`), help (`?`), and Pkg (`]`) mode cells now work when the cell has `#|` options.
 - Large documents no longer fail with `ERROR: Internal Error` when the payload sent to the Julia server exceeds the socket send buffer ([quarto-cli#14834](https://github.com/quarto-dev/quarto-cli/issues/14834), [#12](https://github.com/PumasAI/quarto-julia-engine/pull/12)).
 
 ## [0.2.0](https://github.com/PumasAI/quarto-julia-engine/releases/tag/v0.2.0) - 2026-03-24
