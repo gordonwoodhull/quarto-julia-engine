@@ -10,6 +10,55 @@ import process from "node:process";
 import { fileURLToPath } from "node:url";
 import { spawn, spawnSync } from "node:child_process";
 
+// src/worker-close.ts
+function isWorkerBusyError(e) {
+  return e instanceof Error && /worker is busy/i.test(e.message);
+}
+async function preRunClose(writeCommand, file) {
+  const isopen = await writeCommand({ type: "isopen", content: { file } });
+  if (isopen) {
+    try {
+      await writeCommand({ type: "close", content: { file } });
+    } catch (e) {
+      if (isWorkerBusyError(e)) {
+        await writeCommand({ type: "forceclose", content: { file } });
+      } else {
+        throw e;
+      }
+    }
+  }
+}
+async function postRunClose(writeCommand, file, warn) {
+  try {
+    await writeCommand({ type: "close", content: { file } });
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    warn(
+      `Julia worker close after a successful run failed; returning results anyway.
+${message}`
+    );
+  }
+}
+async function errorRunClose(writeCommand, file, warn) {
+  try {
+    try {
+      await writeCommand({ type: "close", content: { file } });
+    } catch (e) {
+      if (isWorkerBusyError(e)) {
+        await writeCommand({ type: "forceclose", content: { file } });
+      } else {
+        throw e;
+      }
+    }
+  } catch (e) {
+    const message = e instanceof Error ? e.message : String(e);
+    warn(
+      `Julia worker close after a failed run also failed; the worker may be leaked.
+${message}`
+    );
+  }
+}
+
 // src/constants.ts
 var kJuliaEngine = "julia";
 var kExecuteDaemon = "daemon";
@@ -683,21 +732,12 @@ async function executeJulia(options) {
   const conn = await getJuliaServerConnection(options);
   const transportOptions = await pollTransportFile(options);
   const file = options.target.input;
+  const writeCloseCommand = (command) => (
+    // deno-lint-ignore no-explicit-any
+    writeJuliaCommand(conn, command, transportOptions.key, options)
+  );
   if (options.oneShot || options.format.execute[kExecuteDaemonRestart]) {
-    const isopen = await writeJuliaCommand(
-      conn,
-      { type: "isopen", content: { file } },
-      transportOptions.key,
-      options
-    );
-    if (isopen) {
-      await writeJuliaCommand(
-        conn,
-        { type: "close", content: { file } },
-        transportOptions.key,
-        options
-      );
-    }
+    await preRunClose(writeCloseCommand, file);
   }
   const sourceRanges = buildSourceRanges(options.target.markdown);
   let response;
@@ -723,28 +763,19 @@ async function executeJulia(options) {
     );
   } catch (e) {
     if (options.oneShot) {
-      try {
-        await writeJuliaCommand(
-          conn,
-          { type: "close", content: { file } },
-          transportOptions.key,
-          options
-        );
-      } catch (closeError) {
-        quarto.console.warning(
-          `Could not close the julia worker after the failed run, it may stay open until the server exits:
-${closeError}`
-        );
-      }
+      await errorRunClose(
+        writeCloseCommand,
+        file,
+        (message) => quarto.console.warning(message)
+      );
     }
     throw e;
   }
   if (options.oneShot) {
-    await writeJuliaCommand(
-      conn,
-      { type: "close", content: { file } },
-      transportOptions.key,
-      options
+    await postRunClose(
+      writeCloseCommand,
+      file,
+      (message) => quarto.console.warning(message)
     );
   }
   return response.notebook;

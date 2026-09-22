@@ -34,6 +34,15 @@ import type {
   QuartoAPI,
 } from "@quarto/types";
 
+// oneShot worker-close orchestration (busy-recovery lives here so it is
+// unit-testable independent of the socket)
+import {
+  type CloseCommandWriter,
+  errorRunClose,
+  postRunClose,
+  preRunClose,
+} from "./worker-close.ts";
+
 // Constants for this engine
 import {
   kExecuteDaemon,
@@ -733,21 +742,16 @@ async function executeJulia(
   const conn = await getJuliaServerConnection(options);
   const transportOptions = await pollTransportFile(options);
   const file = options.target.input;
+
+  // Adapter: worker-close speaks a narrow close-command vocabulary; the generic
+  // writeJuliaCommand covers the full ServerCommand union. Every command
+  // worker-close emits (isopen/close/forceclose) is a valid ServerCommand.
+  const writeCloseCommand: CloseCommandWriter = (command) =>
+    // deno-lint-ignore no-explicit-any
+    writeJuliaCommand(conn, command as any, transportOptions.key, options);
+
   if (options.oneShot || options.format.execute[kExecuteDaemonRestart]) {
-    const isopen = await writeJuliaCommand(
-      conn,
-      { type: "isopen", content: { file } },
-      transportOptions.key,
-      options,
-    );
-    if (isopen) {
-      await writeJuliaCommand(
-        conn,
-        { type: "close", content: { file } },
-        transportOptions.key,
-        options,
-      );
-    }
+    await preRunClose(writeCloseCommand, file);
   }
 
   const sourceRanges = buildSourceRanges(options.target.markdown);
@@ -774,30 +778,24 @@ async function executeJulia(
       },
     );
   } catch (e) {
+    // A failed run must still close the oneShot worker, or it leaks on the
+    // shared control server (and blocks the server's idle timeout). Best
+    // effort — the run error rethrown below is the diagnostic that matters.
     if (options.oneShot) {
-      try {
-        await writeJuliaCommand(
-          conn,
-          { type: "close", content: { file } },
-          transportOptions.key,
-          options,
-        );
-      } catch (closeError) {
-        // must not mask the run error which is the actual diagnostic
-        quarto.console.warning(
-          `Could not close the julia worker after the failed run, it may stay open until the server exits:\n${closeError}`,
-        );
-      }
+      await errorRunClose(
+        writeCloseCommand,
+        file,
+        (message) => quarto.console.warning(message),
+      );
     }
     throw e;
   }
 
   if (options.oneShot) {
-    await writeJuliaCommand(
-      conn,
-      { type: "close", content: { file } },
-      transportOptions.key,
-      options,
+    await postRunClose(
+      writeCloseCommand,
+      file,
+      (message) => quarto.console.warning(message),
     );
   }
 
