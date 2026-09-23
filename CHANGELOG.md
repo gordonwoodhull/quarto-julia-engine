@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Added static engine declarations (`name`, `claims`, `file-extensions`) to the engine's `_extension.yml` entry, allowing Quarto 2 to resolve `{julia}` cells and `.jl` files to this engine without loading the engine module. These keys are reserved for Quarto 2 and rejected by Quarto 1's `external-engine` schema today; merging requires a quarto-cli schema change (accept-and-ignore) to ship in a stable Quarto 1 release.
+
 ## [0.2.2](https://github.com/PumasAI/quarto-julia-engine/releases/tag/v0.2.2) - 2026-09-08
 
 - A failed render without an execution daemon no longer leaves the notebook's worker process running [#14](https://github.com/PumasAI/quarto-julia-engine/pull/14).
