@@ -2,7 +2,7 @@ name: CI
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, q2/node-port]
   pull_request:
 
 concurrency:
