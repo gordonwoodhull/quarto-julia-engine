@@ -1,5 +1,6 @@
-# it appears that deno cannot launch detached processes https://github.com/denoland/deno/issues/5501
-# so we use an indirection where we start the detached julia process using julia itself
+# neither deno nor node can reliably launch a process that outlives them and its
+# pipes (https://github.com/denoland/deno/issues/5501), so we use an indirection
+# where we start the detached julia process using julia itself
 julia_bin = ARGS[1]
 project = ARGS[2]
 julia_file = ARGS[3]
