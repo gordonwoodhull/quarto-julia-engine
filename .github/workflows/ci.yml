@@ -1,5 +1,6 @@
 name: CI
 on:
+  workflow_dispatch:
   push:
     branches: [main]
   pull_request:
@@ -16,7 +17,7 @@ permissions:
 # Full commit hash for reproducibility; comment documents the human-readable version.
 env:
   QUARTO_CLI_REPO: quarto-dev/quarto-cli
-  QUARTO_CLI_REV: 97e7649bf14607cf39cda13f013185a4146e047b # v1.9.35
+  QUARTO_CLI_REV: c57d2a483d53dc3b4e4483f9ef4091090e7ca7c9 # main (2026-10); includes 8f4cba165, the schema change accepting static engine keys; swap for a release tag once one contains it
 
 jobs:
   test:
