@@ -163,9 +163,16 @@ describe("failures", () => {
 
   test("connection reset surfaces the socket error", async () => {
     const port = await fakeServer((s) => s.resetAndDestroy());
-    const conn = await connectTo(port);
-    await assert.rejects(conn.readLine(), (e: NodeJS.ErrnoException) =>
-      e.code === "ECONNRESET" || /closed/.test(e.message));
+    // The reset may land during connect (Linux/macOS) or on the first read
+    // (Windows), so both steps sit inside the rejecting promise.
+    await assert.rejects(
+      async () => {
+        const conn = await connectTo(port);
+        await conn.readLine();
+      },
+      (e: NodeJS.ErrnoException) =>
+        e.code === "ECONNRESET" || /closed/.test(e.message),
+    );
   });
 
   test("connecting to a closed port rejects with ECONNREFUSED", async () => {
