@@ -43,6 +43,9 @@ import {
   preRunClose,
 } from "./worker-close.ts";
 
+// q2 execution-record wire handling (pure, unit-tested)
+import { buildRecordResult, qnrRunOptions } from "./record-wire.ts";
+
 // Constants for this engine
 import {
   kExecuteDaemon,
@@ -215,9 +218,11 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery = {
           },
         };
 
+        // q2 only: when core sends `units`, this adds `emitUnits` so QNR annotates
+        // its cells; `handledLanguages` passes through as core sent it.
         const juliaExecOptions: JuliaExecuteOptions = {
           oneShot: !executeDaemon,
-          ...execOptions,
+          ...qnrRunOptions(execOptions),
         };
 
         // TODO: executeDaemon can take a number for timeout of kernels, but
@@ -251,6 +256,13 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery = {
           const ipynbPath = stem + ".ipynb";
           writeFileSync(ipynbPath, JSON.stringify(nb, null, 2));
         }
+
+        // q2 only: the record's notebook is a deep copy taken now, before
+        // toMarkdown mutates `nb` (empty when core sent no units).
+        const record = buildRecordResult(
+          nb,
+          (options as { units?: unknown[] }).units,
+        );
 
         // NOTE: for perforance reasons the 'nb' is mutated in place
         // by jupyterToMarkdown (we don't want to make a copy of a
@@ -324,6 +336,7 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery = {
           preserve: result.htmlPreserve,
           postProcess: result.htmlPreserve &&
             (Object.keys(result.htmlPreserve).length > 0),
+          ...record,
         };
       },
 

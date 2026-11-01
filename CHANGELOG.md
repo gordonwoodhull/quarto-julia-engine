@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
+- Quarto 2 execution records: when core sends `units`, the engine asks QuartoNotebookRunner for `emitUnits` annotations and returns a deep copy of the raw notebook (taken before `toMarkdown` mutates it) with a `recordInfo` carrying the Julia hash declaration (`granularity: document`). Without `units` nothing changes. The logic lives in `src/record-wire.ts`.
 - Consume QuartoNotebookRunner from Gordon's fork (`feat/quarto2-handled-languages`, pinned by commit through a `[sources]` entry in `Project.toml`, which needs Julia 1.11 or later): upstream v0.18.6 plus the `handledLanguages` cede commit, which is in no registry release. The `[compat]` pin moves from `=0.18.2` to `=0.18.6`. The pin now includes inline-span ceding for `handledLanguages` and the opt-in `emitUnits` cell annotations (`metadata.quarto`), both off unless the execute options ask for them.
 - Ported the engine from Deno APIs to Node (`node:fs`, `node:child_process`, `node:net`, `node:crypto`), so the same bundle runs under Quarto 1 (Deno) and Quarto 2 (Node). The bundle is now built with esbuild (`npm run build`) instead of `quarto call build-ts-extension`.
 - Replaced the socket reader with a buffering line framer: a server reply split across TCP chunks (including inside a UTF-8 character), or several replies in one chunk, are handled, and a connection that closes mid-reply now reports that rather than a JSON parse error. A connection that times out waiting for `isready` is now closed.
