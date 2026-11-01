@@ -44,7 +44,11 @@ import {
 } from "./worker-close.ts";
 
 // q2 execution-record wire handling (pure, unit-tested)
-import { buildRecordResult, qnrRunOptions } from "./record-wire.ts";
+import {
+  buildRecordResult,
+  coreWillPresent,
+  qnrRunOptions,
+} from "./record-wire.ts";
 
 // Constants for this engine
 import {
@@ -263,6 +267,20 @@ export const juliaEngineDiscovery: ExecutionEngineDiscovery = {
           nb,
           (options as { units?: unknown[] }).units,
         );
+
+        // q2 only: core presents the output from the record, so there is no markdown
+        // to make. Return the notebook and the supporting directory; core's presenter
+        // writes the cells and figures. (Dependencies and preserved HTML come from
+        // `toMarkdown`, so they are not produced on this path.)
+        if (coreWillPresent(options)) {
+          return {
+            engine: kJuliaEngine,
+            markdown: "",
+            supporting: [join(assets.base_dir, assets.supporting_dir)],
+            filters: [],
+            ...record,
+          };
+        }
 
         // NOTE: for perforance reasons the 'nb' is mutated in place
         // by jupyterToMarkdown (we don't want to make a copy of a

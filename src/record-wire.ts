@@ -71,3 +71,14 @@ export function buildRecordResult<N>(
     },
   };
 }
+
+/**
+ * Whether core presents this run's output (`presentedBy: "core"`, EXR-8 B4). It also
+ * needs `units`: without them there is no record, so nothing for core to present from.
+ * Then the engine skips `toMarkdown` and returns only the notebook; an older core sends
+ * neither field and the engine presents as before.
+ */
+export function coreWillPresent(options: object): boolean {
+  const o = options as { units?: unknown; presentedBy?: unknown };
+  return Array.isArray(o.units) && o.presentedBy === "core";
+}

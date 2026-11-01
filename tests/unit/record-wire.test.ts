@@ -15,6 +15,7 @@ import { test } from "node:test";
 import {
   JULIA_HASH_DEFINITION,
   buildRecordResult,
+  coreWillPresent,
   qnrRunOptions,
 } from "../../src/record-wire.ts";
 
@@ -114,4 +115,17 @@ test("engine_uses_core_located_lines", () => {
   );
   const { recordInfo } = buildRecordResult({ cells: [] }, UNITS);
   assert.ok(recordInfo);
+});
+
+test("core_presents_only_when_it_asks_and_sends_units", () => {
+  // presentedBy "core" with units: the engine returns the notebook and no markdown
+  assert.equal(coreWillPresent({ units: UNITS, presentedBy: "core" }), true);
+  // an older core sends neither
+  assert.equal(coreWillPresent({}), false);
+  // units without the request: the engine still presents, as before
+  assert.equal(coreWillPresent({ units: UNITS }), false);
+  // the request without units would leave nothing to present from
+  assert.equal(coreWillPresent({ presentedBy: "core" }), false);
+  // any other value is not a request core presents
+  assert.equal(coreWillPresent({ units: UNITS, presentedBy: "engine" }), false);
 });
