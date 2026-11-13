@@ -106,7 +106,10 @@ var DISPLAY_ONLY_KEYS = [
   // Cell classes the presenter writes (KNR-3 slice 7, D10).
   "classes",
   "fig-column",
-  "tbl-column"
+  "tbl-column",
+  // Engine-neutral: whether core's presenter interleaves source and output. Julia does not
+  // declare interleaving, so a cell is held unless the author sets this to true.
+  "output-interleave"
 ];
 var JULIA_HASH_DEFINITION = {
   id: "julia",

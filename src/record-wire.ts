@@ -70,6 +70,9 @@ const DISPLAY_ONLY_KEYS: string[] = [
   "classes",
   "fig-column",
   "tbl-column",
+  // Engine-neutral: whether core's presenter interleaves source and output. Julia does not
+  // declare interleaving, so a cell is held unless the author sets this to true.
+  "output-interleave",
 ];
 
 /** The engine's declared execution-input hash rule (plan EXR-8, task B1a; OPR-3; version 2: OPR-5 excludes `execute: record-sources`). */

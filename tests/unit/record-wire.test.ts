@@ -63,6 +63,8 @@ const DISPLAY_ONLY = [
   "classes",
   "fig-column",
   "tbl-column",
+  // Engine-neutral: whether the presenter interleaves source and output (core reads it).
+  "output-interleave",
 ];
 
 const UNITS = [
