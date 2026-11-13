@@ -228,3 +228,27 @@ test("core_presents_only_when_it_asks_and_sends_units", () => {
   // any other value is not a request core presents
   assert.equal(coreWillPresent({ units: UNITS, presentedBy: "engine" }), false);
 });
+
+test("engine_maps_execute_env_to_the_qnr_run_env_and_drops_it", () => {
+  const executeEnv = {
+    QUARTO_DOCUMENT_FILE: "my doc.qmd",
+    QUARTO_PROFILE: "prod",
+  };
+  const out = qnrRunOptions(baseOptions({ executeEnv }));
+  assert.deepEqual(out.env, executeEnv);
+  assert.equal("executeEnv" in out, false);
+  // a copy, so QNR-side changes cannot reach the caller's object
+  assert.notEqual(out.env, executeEnv);
+  // other options are untouched
+  assert.deepEqual(out.handledLanguages, ["ojs", "mermaid", "dot", "klingon"]);
+});
+
+test("engine_sends_no_env_when_execute_env_is_empty_or_absent", () => {
+  for (const out of [
+    qnrRunOptions(baseOptions({ executeEnv: {} })),
+    qnrRunOptions(baseOptions()),
+  ]) {
+    assert.equal("env" in out, false);
+    assert.equal("executeEnv" in out, false);
+  }
+});

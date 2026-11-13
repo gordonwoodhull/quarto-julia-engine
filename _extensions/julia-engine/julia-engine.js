@@ -125,8 +125,14 @@ var JULIA_HASH_DEFINITION = {
   ]
 };
 function qnrRunOptions(options) {
-  const hasUnits = Array.isArray(options.units);
-  return hasUnits ? { ...options, emitUnits: true } : { ...options };
+  const { executeEnv, ...rest } = options;
+  const hasUnits = Array.isArray(rest.units);
+  const hasEnv = executeEnv !== void 0 && Object.keys(executeEnv).length > 0;
+  return {
+    ...rest,
+    ...hasUnits ? { emitUnits: true } : {},
+    ...hasEnv ? { env: { ...executeEnv } } : {}
+  };
 }
 function buildRecordResult(nb, units, options) {
   if (!Array.isArray(units)) {
